@@ -4,6 +4,8 @@ Unreleased
 
 -   Fix handling of ``flag_value`` when ``is_flag=False`` to allow such options to be
     used without an explicit value. :issue:`3084`
+-   Quote Windows Explorer ``/select`` targets in ``click.launch(..., locate=True)``
+    so file paths with spaces resolve correctly. :issue:`2994`
 
 Version 8.3.1
 --------------

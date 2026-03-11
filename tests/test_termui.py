@@ -710,3 +710,41 @@ def test_flag_value_prompt(
         assert result.output == expected_output
         assert not result.stderr
         assert result.exit_code == 0 if expected not in (REPEAT, INVALID) else 1
+
+
+def test_launch_locate_windows_quotes_select_path(monkeypatch):
+    import subprocess
+
+    calls = []
+
+    def fake_call(args):
+        calls.append(args)
+        return 0
+
+    monkeypatch.setattr(click._termui_impl, "WIN", True)
+    monkeypatch.setattr(click._termui_impl, "CYGWIN", False)
+    monkeypatch.setattr(subprocess, "call", fake_call)
+
+    result = click.launch(r"C:\Users\foo bar\demo.txt", locate=True)
+
+    assert result == 0
+    assert calls == [["explorer", '/select,"C:\\Users\\foo bar\\demo.txt"']]
+
+
+def test_launch_locate_windows_escapes_quotes(monkeypatch):
+    import subprocess
+
+    calls = []
+
+    def fake_call(args):
+        calls.append(args)
+        return 0
+
+    monkeypatch.setattr(click._termui_impl, "WIN", True)
+    monkeypatch.setattr(click._termui_impl, "CYGWIN", False)
+    monkeypatch.setattr(subprocess, "call", fake_call)
+
+    result = click.launch('C:\\tmp\\a"b.txt', locate=True)
+
+    assert result == 0
+    assert calls == [["explorer", '/select,"C:\\tmp\\a""b.txt"']]
