@@ -82,6 +82,27 @@ def test_group_command_same_option():
     assert _get_words(cli, ["-a", "a", "x", "-a", "a"], "-") == ["--help"]
 
 
+def test_custom_resolve_command_handles_missing_command() -> None:
+    class AliasedGroup(Group):
+        def get_command(self, ctx, cmd_name):
+            rv = super().get_command(ctx, cmd_name)
+            if rv is not None:
+                return rv
+            matches = [x for x in self.list_commands(ctx) if x.startswith(cmd_name)]
+            if not matches:
+                return None
+            if len(matches) == 1:
+                return Group.get_command(self, ctx, matches[0])
+            ctx.fail(f"Too many matches: {', '.join(sorted(matches))}")
+
+        def resolve_command(self, ctx, args):
+            _, cmd, args = super().resolve_command(ctx, args)
+            return cmd.name if cmd is not None else None, cmd, args
+
+    cli = AliasedGroup("cli", commands=[Command("foo", params=[Argument(["arg"])])])
+    assert _get_words(cli, ["foo_typo"], "bar") == []
+
+
 def test_chained():
     cli = Group(
         "cli",
